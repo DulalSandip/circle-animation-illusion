@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive Circle Animation</title>
+    <style>
+      body {
+        text-align: center;
+        font-family: Arial, sans-serif;
+        background-color: #121212;
+        color: white;
+        margin: 0;
+      }
+      #controls {
+        padding: 15px;
+        background: #1e1e1e;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+      }
+      label {
+        font-size: 16px;
+      }
+      input,
+      select {
+        padding: 5px;
+        text-align: center;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+      }
+      canvas {
+        width: 80vw;
+        height: 80vh;
+        display: block;
+        border: 1px solid white;
+        background: black;
+        margin: auto;
+      }
+      footer {
+        margin-top: 20px;
+        font-size: 14px;
+      }
+      footer a {
+        color: white;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="controls">
+      <label
+        >Motion Type:
+        <select id="motionType">
+          <option value="dynamic">Dynamic Motion</option>
+          <option value="static">Static Offset</option>
+        </select>
+      </label>
+      <label
+        >Dynamic Motion Factor:
+        <input
+          type="number"
+          id="motionFactor"
+          value="1"
+          min="0.1"
+          max="5"
+          step="0.1"
+      /></label>
+      <label
+        >Circles (N):
+        <input type="number" id="circleCount" value="50" min="1" max="200"
+      /></label>
+      <label
+        >Fill Index:
+        <input type="number" id="fillIndex" value="25" min="0" max="200"
+      /></label>
+      <label
+        >Circle Size:
+        <input type="number" id="circleSize" value="50" min="5" max="100"
+      /></label>
+      <label
+        >Speed:
+        <input type="number" id="speed" value="1000" min="100" max="5000"
+      /></label>
+      <label
+        >Circle Color: <input type="color" id="circleColor" value="#ffffff"
+      /></label>
+      <label
+        >Fill Color: <input type="color" id="fillColor" value="#ff0000"
+      /></label>
+      <label>Sound: <input type="checkbox" id="soundToggle" checked /></label>
+    </div>
+
+    <canvas id="myCanvas"></canvas>
+    <audio id="circleSound" src="circle-sound.mp3" loop></audio>
+
+    <script>
+      const canvas = document.getElementById("myCanvas");
+      const ctx = canvas.getContext("2d");
+      const soundToggle = document.getElementById("soundToggle");
+      const sound = document.getElementById("circleSound");
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth * 0.8;
+        canvas.height = window.innerHeight * 0.8;
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+      }
+      resizeCanvas();
+      window.addEventListener("resize", resizeCanvas);
+
+      function getInputValues() {
+        return {
+          N: parseInt(document.getElementById("circleCount").value),
+          fillIndex: parseInt(document.getElementById("fillIndex").value),
+          circleSize: parseInt(document.getElementById("circleSize").value),
+          speed: parseInt(document.getElementById("speed").value),
+          motionFactor: parseFloat(
+            document.getElementById("motionFactor").value
+          ),
+          motionType: document.getElementById("motionType").value,
+          color: document.getElementById("circleColor").value,
+          fillColor: document.getElementById("fillColor").value,
+        };
+      }
+
+      function updateUI() {
+        const motionFactorInput = document.getElementById("motionFactor");
+        if (document.getElementById("motionType").value === "static") {
+          motionFactorInput.disabled = true;
+        } else {
+          motionFactorInput.disabled = false;
+        }
+      }
+
+      function animate() {
+        ctx.clearRect(
+          -canvas.width / 2,
+          -canvas.height / 2,
+          canvas.width,
+          canvas.height
+        );
+        const {
+          N,
+          fillIndex,
+          circleSize,
+          speed,
+          motionFactor,
+          motionType,
+          color,
+          fillColor,
+        } = getInputValues();
+
+        for (let i = 0; i < N; i++) {
+          let offset;
+          if (motionType === "dynamic") {
+            const dynamicValue =
+              motionFactor + Math.sin(Date.now() / speed) ** 2;
+            offset = Date.now() / speed + (dynamicValue * i * Math.PI) / N;
+          } else {
+            offset = Date.now() / speed + (i * Math.PI) / N;
+          }
+
+          const x = (Math.sin(offset) * canvas.height) / 2;
+
+          ctx.save();
+          ctx.rotate((i * Math.PI) / N);
+          drawCircle(x, 0, circleSize, i === fillIndex, color, fillColor);
+          ctx.restore();
+        }
+
+        if (soundToggle.checked) {
+          sound.play();
+        } else {
+          sound.pause();
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      function drawCircle(x, y, radius, fill, color, fillColor) {
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        if (fill) {
+          ctx.fillStyle = fillColor;
+          ctx.fill();
+        }
+      }
+
+      document.querySelectorAll("input, select").forEach((input) => {
+        input.addEventListener("input", () => {
+          updateUI();
+          animate();
+        });
+      });
+
+      updateUI();
+      animate();
+    </script>
+
+    <footer>
+      &copy; <span id="year"></span> Designed by
+      <a href="https://sandipdulal.com.np" target="_blank">Sandip Dulal</a>
+    </footer>
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
